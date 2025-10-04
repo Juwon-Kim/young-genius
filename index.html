@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>💰 복리의 마법 - 시뮬레이터 선택</title>
+  <style>
+    body {
+      font-family: "Comic Sans MS", sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h1 {
+      color: #000000;
+      margin-bottom: 0px;
+      font-size: 2em;
+    }
+
+    p {
+      color: #7f7e7e;
+      margin-top: 0px;
+      margin-bottom: 30px;
+      font-size: 1em;
+    }
+
+    .container {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+      padding: 30px;
+      width: 450px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0px 8px 18px rgba(0,0,0,0.15);
+    }
+
+    .card h2 {
+      font-size: 1.5em;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .card p {
+      color: #666;
+      font-size: 0.95em;
+      margin-bottom: 15px;
+    }
+
+    button {
+      background-color: #34c759;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 20px;
+      font-size: 1em;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background-color: #28a745;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>숫자의 마법과 효율의 비밀</h1>
+  <p>보고 싶은 시뮬레이터를 선택하세요.</p>
+
+  <div class="container">
+    <div class="card">
+      <h2>♾️큰수의 법칙 - 동전 던지기 시뮬레이션</h2>
+      <p>시행 횟수에 따라 확률이 50%에 수렴하는 것을 관찰해보세요.</p>
+      <button onclick="location.href='큰수의법칙.html'">🔍 이동하기</button>
+    </div>
+
+    <div class="card">
+      <h2>♾️큰수의 법칙 - 불공평한 동전 시뮬레이션</h2>
+      <p>앞면 확률을 조정하여 수렴 과정을 관찰해보세요.</p>
+      <button onclick="location.href='큰수의법칙(불공정 확률 만들기).html'">🔍 이동하기</button>
+    </div>
+
+    <div class="card">
+      <h2>📈 (고정) 복리 시뮬레이터</h2>
+      <p>처음 투자금과 수익율(비)을 입력하고, 시간이 지나면서 돈이 어떻게 불어나는지 확인해보세요.</p>
+      <button onclick="location.href='복리시뮬레이터.html'">🔍 이동하기</button>
+    </div>
+
+    <div class="card">
+      <h2>📈 (변동) 복리 시뮬레이터</h2>
+      <p>수익율(비)과 투자금을 단계별로 입력하여 금액 변화를 확인해보세요..</p>
+      <button onclick="location.href='(변동)복리시뮬레이터.html'">🔍 이동하기</button>
+    </div>
+
+
+    <div class="card">
+      <h2>💰 부의 공식 - 수익율(비)의 함정</h2>
+      <p>수익율(비)에 숨겨진 비밀이 무엇인지 확인해보세요.</p>
+      <button onclick="location.href='수익률의 함정.html'">🔍 이동하기</button>
+    </div>
+
+
+    <div class="card">
+      <h2>💰 복리의 마법 - 단리 vs 복리 시뮬레이터</h2>
+      <p>단리와 복리의 차이를 직접 확인해보세요!</p>
+      <button onclick="location.href='단리vs복리.html'">🔍 이동하기</button>
+    </div>
+
+  </div>
+
+</body>
+</html>

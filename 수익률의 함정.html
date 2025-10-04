@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>💰 부의 공식 - 수익율의 함정</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+  font-family: "Comic Sans MS", sans-serif;
+  background-color: #f0f4f8;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+h1 { color: #000; margin-bottom: 0; font-size: 2em; }
+p { color: #7f7e7e; margin-top: 0; margin-bottom: 20px; font-size: 0.9em; }
+
+.container {
+  display: flex; flex-direction: column; gap: 20px;
+  width: 100%; max-width: 1000px; align-items: center;
+}
+.card {
+  background: #ffffff; border-radius: 15px;
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+  padding: 20px; width: 400px; display: flex;
+  flex-direction: column; gap: 15px;
+}
+.input-row {
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: nowrap; overflow-x: auto;
+}
+input[type="number"], input[type="color"] {
+  padding: 6px 10px; border-radius: 10px; border: 1px solid #ccc;
+  text-align: right; font-size: 0.95em; background-color: #fff; width: 100px;
+}
+input[type="color"] { width: 50px; padding: 0; }
+button {
+  background-color: #34c759; border: none; border-radius: 12px;
+  padding: 8px 15px; font-size: 1em; cursor: pointer;
+  color: white; font-weight: bold; transition: 0.2s;
+}
+button:hover { background-color: #28a745; }
+
+.scenario {
+  background: #ffffff; border-radius: 20px; padding: 15px; margin-bottom: 15px;
+  width: 95%; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  box-shadow: 2px 2px 12px rgba(0,0,0,0.1);
+}
+canvas {
+  background-color: #ffffff; border-radius: 15px;
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+  margin-top: 20px; width: 90%; max-width: 800px;
+}
+.control-buttons {
+  display: flex; gap: 15px; flex-wrap: wrap;
+  justify-content: center; margin-bottom: 15px; align-items: center;
+}
+.mode-selector {
+  display: flex; justify-content: center; gap: 10px;
+  align-items: center; margin-top: 5px; width: 100%;
+}
+</style>
+</head>
+<body>
+
+<h1>💰 부의 공식 - 수익율의 함정</h1>
+<p>홀수년과 짝수년의 수익률(%) 또는 수익비(배)를 비교해보세요.</p>
+
+<div class="control-buttons">
+  <label>초기 금액:
+    <input type="number" id="initialAmount" value="10000" min="10"> 원
+  </label>
+  <label>투자기간:
+    <input type="number" id="totalYears" value="10" min="1" max="50"> 년
+  </label>
+
+  <!-- ✅ 수익율 / 수익비 선택 라디오 버튼 -->
+  <div class="mode-selector">
+    단위:
+    <label><input type="radio" name="rateMode" value="ratio" checked> 수익비(배)</label>
+    <label><input type="radio" name="rateMode" value="percent"> 수익률(%)</label>
+  </div>
+</div>
+
+<div id="scenariosContainer"></div>
+<div style="margin-top:10px; text-align:center;">
+  <button onclick="drawChart()">🔍 조회하기</button>
+</div>
+
+<canvas id="compoundChart" width="800" height="400"></canvas>
+
+<script>
+let scenarioCount = 0;
+let rateMode = "ratio"; // 현재 선택된 단위
+
+const colors = ["#e53935", "#fdd835", "#43a047", "#1e88e5"];
+
+function getInitialScenarios(mode) {
+  if (mode === "percent") {
+    return [
+      [10, 10],
+      [30, -10],
+      [-10, 30],
+      [20, 0]
+    ];
+  } else {
+    // ✅ % → 배율 변환 (1 + n/100)
+    return [
+      [1.1, 1.1],
+      [1.3, 0.9],
+      [0.9, 1.3],
+      [1.2, 1.0]
+    ];
+  }
+}
+
+function addScenario(rates = [], color = "#00796b") {
+  scenarioCount++;
+  const container = document.getElementById('scenariosContainer');
+  const div = document.createElement('div');
+  div.className = 'scenario';
+  div.id = 'scenario-' + scenarioCount;
+
+  let html = `<div class="scenario-header"><strong>${scenarioCount}안</strong></div>`;
+  html += `<div class="input-row"><input type="color" id="scenario-${scenarioCount}-color" value="${color}"></div>`;
+  html += `<div class="input-row">`;
+  html += `<label>홀수년차: <input type="number" value="${rates[0]}" id="scenario-${scenarioCount}-odd" step="0.01"> </label>`;
+  html += `<label>짝수년차: <input type="number" value="${rates[1]}" id="scenario-${scenarioCount}-even" step="0.01"> </label>`;
+  html += `</div>`;
+
+  div.innerHTML = html;
+  container.appendChild(div);
+}
+
+function renderScenarios() {
+  document.getElementById('scenariosContainer').innerHTML = '';
+  scenarioCount = 0;
+  const scenarios = getInitialScenarios(rateMode);
+  scenarios.forEach((rates, i) => addScenario(rates, colors[i]));
+}
+
+function drawChart() {
+  const initialAmount = parseFloat(document.getElementById('initialAmount').value);
+  const totalYears = parseInt(document.getElementById('totalYears').value);
+  const scenarioDivs = document.querySelectorAll('.scenario');
+  const labels = [];
+  const datasets = [];
+
+  for (let i = 1; i <= totalYears; i++) {
+    labels.push(i + '년차');
+  }
+
+  scenarioDivs.forEach((div, idx) => {
+    const oddValue = parseFloat(div.querySelector(`#scenario-${idx+1}-odd`).value);
+    const evenValue = parseFloat(div.querySelector(`#scenario-${idx+1}-even`).value);
+    const color = div.querySelector('input[type=color]').value;
+
+    // ✅ 단위별 변환
+    const oddMultiplier = (rateMode === "percent") ? (1 + oddValue / 100) : oddValue;
+    const evenMultiplier = (rateMode === "percent") ? (1 + evenValue / 100) : evenValue;
+
+    let amount = initialAmount;
+    const data = [amount];
+
+    for (let year = 1; year <= totalYears; year++) {
+      const mult = (year % 2 === 1) ? oddMultiplier : evenMultiplier;
+      amount *= mult;
+      data.push(parseFloat(amount.toFixed(2)));
+    }
+
+    datasets.push({
+      label: div.querySelector('strong').innerText,
+      data,
+      borderColor: color,
+      fill: false,
+      tension: 0.3
+    });
+  });
+
+  const ctx = document.getElementById('compoundChart').getContext('2d');
+  if (window.myChart) window.myChart.destroy();
+
+  window.myChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: ['0년차', ...labels], datasets },
+    options: {
+      responsive: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        y: { title: { display: true, text: '금액 (원)' } },
+        x: { title: { display: true, text: '연도' } }
+      }
+    }
+  });
+}
+
+// ✅ 라디오 버튼 변경 시 기본값 변경
+document.querySelectorAll('input[name="rateMode"]').forEach(r => {
+  r.addEventListener('change', e => {
+    rateMode = e.target.value;
+    renderScenarios();
+  });
+});
+
+// 초기 시나리오 표시
+renderScenarios();
+</script>
+</body>
+</html>

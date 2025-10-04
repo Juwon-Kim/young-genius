@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>💰 복리의 마법 - (변동) 복리 시뮬레이터</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+  font-family: "Comic Sans MS", sans-serif;
+  background-color: #f0f4f8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  min-height: 100vh;
+}
+h1 { color: #000; margin-bottom: 0px; font-size: 2em; }
+p { color: #7f7e7e; margin-top:0; margin-bottom:20px; font-size:0.9em; }
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 900px;
+}
+
+.input-container {
+  background: #ffffff;
+  border-radius: 15px;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 15px;
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 700px;
+}
+
+.input-container label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.1em;
+}
+
+.input-unit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+input[type="number"] {
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  width: 100px;
+  text-align: right;
+  font-size: 1em;
+  background-color: #ffffff;
+}
+
+select {
+  width: 130px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  text-align: center;
+  font-size: 1em;
+  background-color: #ffffff;
+}
+
+.option-group {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  align-items: center;
+}
+
+.option-group label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.radio-group {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+button {
+  background-color: #34c759;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  color: white;
+  font-weight: bold;
+  transition: 0.2s;
+}
+button:hover { background-color: #28a745; }
+
+#rateInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.rate-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rate-row span { min-width: 50px; text-align: center; }
+.rate-row input { width: 60px; text-align: right; }
+
+.chart-card {
+  background: #ffffff;
+  border-radius: 15px;
+  padding: 10px;
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+}
+
+canvas {
+  width: 100%;
+  border-radius: 15px;
+  background-color: #ffffff;
+}
+</style>
+</head>
+<body>
+<h1>💰 복리의 마법 - (변동) 복리 시뮬레이터</h1>
+<p>수익율과 투자금을 단계별로 입력하여 금액 변화를 확인해보세요.</p>
+
+<div class="container">
+
+  <div class="input-container">
+    <label>시드머니 (🌱):
+      <div class="input-unit">
+        <input id="seed" type="number" value="1000">
+        <span>원</span>
+      </div>
+    </label>
+
+    <div class="option-group">
+      <label>투자 기간:
+        <select id="count"></select>
+      </label>
+      <label>단위:
+        <select id="unit">
+          <option value="day">일</option>
+          <option value="month">월</option>
+          <option value="year" selected>년</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- ✅ 추가: 수익률 단위 선택 -->
+    <div class="radio-group">
+        단위: 
+      <label><input type="radio" name="rateMode" value="ratio" checked> 수익비(배)</label>
+      <label><input type="radio" name="rateMode" value="percent"> 수익율(%)</label>
+    </div>
+    <div id="rateInputs"></div>
+    <div class="radio-group">
+      <label><input type="radio" name="chartType" value="line" checked> 선그래프</label>
+      <label><input type="radio" name="chartType" value="bar"> 막대그래프</label>
+    </div>
+
+    <button id="generate">🔍 조회하기</button>
+  </div>
+
+  <div class="chart-card">
+    <canvas id="growthChart"></canvas>
+  </div>
+
+</div>
+
+<script>
+const countSelect = document.getElementById("count");
+for(let i=1;i<=30;i++){
+  const opt = document.createElement("option");
+  opt.value = i; opt.textContent = i;
+  countSelect.appendChild(opt);
+}
+countSelect.value = 10;
+
+const rateInputsDiv = document.getElementById("rateInputs");
+const unitSelect = document.getElementById("unit");
+
+// ✅ 현재 모드 확인 함수
+function getRateMode() {
+  return document.querySelector('input[name="rateMode"]:checked').value;
+}
+
+function createRateInputs(count){
+  const mode = getRateMode();
+  const isRatio = mode === "ratio";
+  const defaultRate = isRatio ? 2 : 100;
+  const rateLabel = isRatio ? "수익비" : "수익율";
+  const rateUnitText = isRatio ? "배" : "%";
+
+  const unitText = unitSelect.value === "day" ? "일 차" :
+                   unitSelect.value === "month" ? "개월 차" : "년 차";
+  rateInputsDiv.innerHTML = '';
+
+  for(let i=1;i<=count;i++){
+    const div = document.createElement("div");
+    div.className = "rate-row";
+
+    const labelPeriod = document.createElement("span");
+    labelPeriod.textContent = `${i}${unitText}:`;
+
+    const labelProfit = document.createElement("span");
+    labelProfit.textContent = "투자금";
+    const profitInput = document.createElement("input");
+    profitInput.type="number"; profitInput.step="10"; profitInput.value=0;
+    const profitUnit = document.createElement("span"); profitUnit.textContent="원";
+
+    const labelRate = document.createElement("span"); labelRate.textContent=rateLabel;
+    const rateInput = document.createElement("input"); 
+    rateInput.type="number"; 
+    rateInput.step=isRatio?"0.1":"1"; 
+    rateInput.value=defaultRate;
+
+    const rateUnit = document.createElement("span");
+    rateUnit.className = "rate-unit";
+    rateUnit.textContent = rateUnitText;
+
+    div.append(labelPeriod,labelProfit,profitInput,profitUnit,labelRate,rateInput,rateUnit);
+    rateInputsDiv.appendChild(div);
+  }
+}
+
+// 초기 생성
+createRateInputs(parseInt(countSelect.value));
+countSelect.addEventListener("change",()=>createRateInputs(parseInt(countSelect.value)));
+unitSelect.addEventListener("change",()=>createRateInputs(parseInt(countSelect.value)));
+
+// ✅ 단위 변경 시 전체 입력창 갱신
+document.querySelectorAll('input[name="rateMode"]').forEach(radio=>{
+  radio.addEventListener('change',()=>{
+    createRateInputs(parseInt(countSelect.value));
+  });
+});
+
+let chart;
+
+// ✅ 복리 계산 로직
+function calculateVariableCompound(seed){
+  const labels=[], data=[];
+  let total = seed;
+  const unitText = unitSelect.value === "day" ? "일" :
+                   unitSelect.value === "month" ? "월" : "년";
+  const mode = getRateMode();
+
+  labels.push(`0${unitText}`);
+  data.push(Math.round(total));
+
+  const rows = rateInputsDiv.querySelectorAll(".rate-row");
+  rows.forEach((row,i)=>{
+    const inputs = row.querySelectorAll("input");
+    const p = parseFloat(inputs[0].value) || 0;
+    const r = parseFloat(inputs[1].value) || 0;
+
+    if(mode === "ratio"){
+      total = (total + p) * r;
+    } else {
+      total = (total + p) * (1 + r/100);
+    }
+
+    labels.push(`${i+1}${unitText}`);
+    data.push(Math.round(total));
+  });
+
+  return {labels,data};
+}
+
+function drawChart(){
+  const seed = parseFloat(document.getElementById("seed").value);
+  if(isNaN(seed)){ alert("시드머니를 정확히 입력해주세요!"); return; }
+
+  const {labels,data} = calculateVariableCompound(seed);
+  const chartType = document.querySelector('input[name="chartType"]:checked').value;
+  const ctx = document.getElementById("growthChart").getContext("2d");
+  if(chart) chart.destroy();
+
+  chart = new Chart(ctx,{
+    type: chartType,
+    data:{ labels, datasets:[{
+      label:"🌱금액",
+      data,
+      borderColor:"#4caf50",
+      backgroundColor:"rgba(76,175,80,0.1)",
+      borderWidth:3,
+      fill:true,
+      tension:0.3,
+      pointRadius:5,
+      pointBackgroundColor:"#81c784"
+    }]},
+    options:{
+      plugins:{
+        tooltip:{
+          enabled:true,
+          mode:'index',
+          intersect:false,
+          callbacks:{ label:(ctx)=>`${ctx.parsed.y.toLocaleString()} 원` }
+        }
+      },
+      scales:{
+        x:{ title:{display:true,text:"기간"}, ticks:{color:"#333"} },
+        y:{ title:{display:true,text:"금액(원)"}, ticks:{color:"#333"} }
+      }
+    }
+  });
+}
+
+document.getElementById("generate").addEventListener("click", drawChart);
+</script>
+</body>
+</html>

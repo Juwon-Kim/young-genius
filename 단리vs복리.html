@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>💰 복리의 마법 - 단리 vs 복리 시뮬레이터</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: "Comic Sans MS", sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h1 {
+      color: #000000;
+      margin-bottom: 0px;
+      font-size: 2em;
+    }
+
+    p {
+      color: #7f7e7e;
+      margin-top: 0px;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .card label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+
+    .input-unit {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    input[type="number"], select {
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      width: 120px;
+      text-align: right;
+      font-size: 1em;
+      background-color: #ffffff;
+    }
+
+    select {
+      width: 130px;
+      text-align: center;
+    }
+
+    button {
+      background-color: #34c759;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 20px;
+      font-size: 1em;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background-color: #28a745;
+    }
+
+    .radio-group, .mode-selector, .interest-type {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 10px;
+      font-size: 1em;
+    }
+
+    canvas {
+      background-color: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 800px;
+      padding: 0px;
+    }
+
+    .option-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .input-container {
+      background: #ffffff;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .chart-card {
+      background: #ffffff;
+      border-radius: 15px;
+      padding: 0px;
+      width: 800px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+<h1>💰 복리의 마법 - 단리 vs 복리 시뮬레이터</h1>
+<p>단리와 복리의 차이를 직접 확인해보세요!</p>
+
+<div class="container">
+
+  <div class="card input-container">
+    <label>
+      <span>시드머니 (🌱):</span>
+      <div class="input-unit">
+        <input id="seed" type="number" value="10000">
+        <span>원</span>
+      </div>
+    </label>
+
+    <div class="mode-selector">
+      <span>수익 단위:</span>
+      <label><input type="radio" name="rateMode" value="ratio" checked> 수익비(배)</label>
+      <label><input type="radio" name="rateMode" value="percent"> 수익률(%)</label>
+    </div>
+
+    <label>
+      <span>고정 수익율:</span>
+      <div class="input-unit">
+        <input id="rate" type="number" value="2" step="0.1">
+        <span id="rateUnitLabel">배</span>
+      </div>
+    </label>
+
+    <div class="option-group">
+      <label>투자 기간: 
+        <select id="count"></select>
+      </label>
+      <label>단위:
+        <select id="unit">
+          <option value="day">일</option>
+          <option value="month">월</option>
+          <option value="year" selected>년</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="radio-group">
+      <label><input type="radio" name="chartType" value="line" checked> 선그래프</label>
+      <label><input type="radio" name="chartType" value="bar"> 막대그래프</label>
+    </div>
+
+    <div class="interest-type">
+      <label><input type="radio" name="interestType" value="both" checked> 단리 vs 복리 비교</label>
+      <label><input type="radio" name="interestType" value="simple"> 단리만 보기</label>
+      <label><input type="radio" name="interestType" value="compound"> 복리만 보기</label>
+    </div>
+
+    <button id="generate">🔍 조회하기</button>
+  </div>
+
+  <div class="chart-card">
+    <canvas id="growthChart"></canvas>
+  </div>
+
+</div>
+
+<script>
+  const countSelect = document.getElementById("count");
+  for (let i = 1; i <= 30; i++) {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = i;
+    countSelect.appendChild(opt);
+  }
+  countSelect.value = 10;
+
+  let chart;
+
+  // ✅ 단리 계산
+  function calculateSimple(seed, rate, rateMode, count) {
+    const data = [seed];
+    const labels = ["0"];
+    const appliedRate = (rateMode === "percent") ? rate / 100 : (rate - 1);
+
+    for (let i = 1; i <= count; i++) {
+      const total = seed + seed * appliedRate * i;
+      data.push(Math.round(total));
+      labels.push(i.toString());
+    }
+    return { labels, data };
+  }
+
+  // ✅ 복리 계산
+  function calculateCompound(seed, rate, rateMode, count) {
+    const data = [seed];
+    const labels = ["0"];
+    const appliedRate = (rateMode === "percent") ? (1 + rate / 100) : rate;
+
+    let total = seed;
+    for (let i = 1; i <= count; i++) {
+      total *= appliedRate;
+      data.push(Math.round(total));
+      labels.push(i.toString());
+    }
+    return { labels, data };
+  }
+
+  function drawChart() {
+    const seed = parseFloat(document.getElementById("seed").value);
+    const rate = parseFloat(document.getElementById("rate").value);
+    const rateMode = document.querySelector('input[name="rateMode"]:checked').value;
+    const chartType = document.querySelector('input[name="chartType"]:checked').value;
+    const interestType = document.querySelector('input[name="interestType"]:checked').value;
+    const count = parseInt(document.getElementById("count").value);
+
+    if (isNaN(seed) || isNaN(rate)) {
+      alert("시드머니와 수익율을 정확히 입력해주세요!");
+      return;
+    }
+
+    const simple = calculateSimple(seed, rate, rateMode, count);
+    const compound = calculateCompound(seed, rate, rateMode, count);
+
+    const ctx = document.getElementById("growthChart").getContext("2d");
+    if (chart) chart.destroy();
+
+    const datasets = [];
+
+    if (interestType === "simple" || interestType === "both") {
+      datasets.push({
+        label: "📏 단리",
+        data: simple.data,
+        borderColor: "#2196f3",
+        backgroundColor: "rgba(33,150,243,0.2)",
+        borderWidth: 3,
+        fill: true,
+        tension: 0.3,
+        pointRadius: 5,
+        pointBackgroundColor: "#64b5f6"
+      });
+    }
+
+    if (interestType === "compound" || interestType === "both") {
+      datasets.push({
+        label: "💰 복리",
+        data: compound.data,
+        borderColor: "#4caf50",
+        backgroundColor: "rgba(76,175,80,0.2)",
+        borderWidth: 3,
+        fill: true,
+        tension: 0.3,
+        pointRadius: 5,
+        pointBackgroundColor: "#81c784"
+      });
+    }
+
+    chart = new Chart(ctx, {
+      type: chartType,
+      data: {
+        labels: compound.labels,
+        datasets
+      },
+      options: {
+        plugins: {
+          tooltip: {
+            enabled: true,
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} 원`
+            }
+          },
+          legend: { position: "top" }
+        },
+        scales: {
+          x: { title: { display: true, text: "기간" } },
+          y: { title: { display: true, text: "금액(원)" } }
+        }
+      }
+    });
+  }
+
+  // ✅ 단위 선택 시 단위 표시 및 기본값 변경
+  document.querySelectorAll('input[name="rateMode"]').forEach(radio => {
+    radio.addEventListener("change", (e) => {
+      const label = document.getElementById("rateUnitLabel");
+      const rateInput = document.getElementById("rate");
+      if (e.target.value === "percent") {
+        label.textContent = "%";
+        rateInput.value = 100;
+      } else {
+        label.textContent = "배";
+        rateInput.value = 2;
+      }
+    });
+  });
+
+  document.getElementById("generate").addEventListener("click", drawChart);
+</script>
+
+</body>
+</html>
