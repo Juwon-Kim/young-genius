@@ -96,11 +96,11 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const assetTypes = {
-      "예금/적금": { vol: 0.2, drift: 0.2, color: "#22C55E" },
-      "금": { vol: 1.0, drift: 0.4, color: "#FACC15" },
-      "채권": { vol: 2.0, drift: 0.8, color: "#FB923C" },
-      "주식(안정)": { vol: 9.0, drift: 1.2, color: "#3B82F6" },
-      "주식(위험)": { vol: 20.0, drift: 2.5, color: "#EF4444" },
+      "예금/적금": { vol: 0.1, drift: 3.7, color: "#22C55E" },
+      "채권": { vol: 5, drift: 5.5, color: "#FB923C" },
+	  "금": { vol: 7, drift: 8, color: "#FACC15" },
+      "주식(안정)": { vol: 11, drift: 10, color: "#3B82F6" },
+      "주식(위험)": { vol: 25, drift: 30, color: "#EF4444" },
     };
 
     let assets = [];
@@ -157,6 +157,16 @@
       while (v === 0) v = Math.random();
       return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
     }
+	
+	function equalizeWeights() {
+	  const count = assets.length;
+	  if (count === 0) return;
+	  const per = (100 / count).toFixed(1);
+	  for (let i = 0; i < count; i++) {
+		$(`weight_${i}`).value = per;
+	  }
+	  updateLabels();
+	}
 
 	function createAssetCard(index) {
 	  const card = document.createElement("div");
@@ -172,15 +182,16 @@
 		  <select id="type_${index}" class="mt-1 w-full border rounded p-1 text-sm">${typeOptions}</select>
 		</label>
 		<div class="mt-2 text-xs text-sky-600">투자 비중(%)</div>
-		<input type="range" id="weight_${index}" min="0" max="100" step="1" value="${(100 / 3).toFixed(0)}" class="w-full">
-		<div class="text-xs text-sky-500">현재: <span id="weightLabel_${index}">${(100 / 3).toFixed(0)}</span>%</div>
+		<input type="range" id="weight_${index}" min="0" max="100" step="1" value="0" class="w-full">
+		<div class="text-xs text-sky-500">현재: <span id="weightLabel_${index}">0</span>%</div>
+
 		
 		<div class="mt-2 text-xs text-sky-600">변동성(%)</div>
-		<input type="range" id="vol_${index}" min="0" max="20" step="0.1" class="w-full">
+		<input type="range" id="vol_${index}" min="0" max="100" step="0.1" class="w-full">
 		<div class="text-xs text-sky-500">현재: <span id="volLabel_${index}"></span>%</div>
 
 		<div class="mt-2 text-xs text-sky-600">평균 수익률(%)</div>
-		<input type="range" id="drift_${index}" min="-0.5" max="5" step="0.05" class="w-full">
+		<input type="range" id="drift_${index}" min="-100" max="100" step="0.1" class="w-full">
 		<div class="text-xs text-sky-500">현재: <span id="driftLabel_${index}"></span>%</div>
 	  `;
 	  return card;
@@ -217,71 +228,90 @@
     }
 
     function initSimulation() {
-      cancelRun();
-      day = 0;
-      const initial = Number($("initialCapital").value) || 1000;
-      histories = [];
-      portfolioHistory = [initial];
+	  cancelRun();
+	  day = 0;
+	  const initial = Number($("initialCapital").value) || 1000;
+	  histories = [];
+	  portfolioHistory = [];
 
-      const count = assets.length;
-      assets = [];
+	  // 추가/삭제 후 균등 비중 재설정
+	  equalizeWeights();
 
-      simChart.data.labels = [0];
-      simChart.data.datasets = [];
+	  const count = assets.length;
+	  assets = [];
 
-      assets = Array.from({ length: count }, (_, i) => {
-        const type = $(`type_${i}`).value;
-        const { color } = assetTypes[type];
-        const weight = Number($(`weight_${i}`).value) / 100;
-        const value = initial * weight;
-        histories.push([value]);
-        simChart.data.datasets.push({
-          label: `${type}`,
-          data: [value],
-          borderWidth: 2,
-          pointRadius: 0,
-          tension: 0.25,
-          borderColor: color,
-          fill: false,
-        });
-        return value;
-      });
+	  simChart.data.labels = [0];
+	  simChart.data.datasets = [];
 
-      simChart.data.datasets.push({
-        label: "포트폴리오(평균)",
-        data: [initial],
-        borderWidth: 3,
-        pointRadius: 0,
-        tension: 0.25,
-        borderColor: "#111827",
-        fill: false,
-      });
+	  assets = Array.from({ length: count }, (_, i) => {
+		const type = $(`type_${i}`).value;
+		const { color } = assetTypes[type];
+		const weight = Number($(`weight_${i}`).value) / 100;
+		const value = initial * weight;
+		histories.push([value]);
+		simChart.data.datasets.push({
+		  label: `${type}`,
+		  data: [value],
+		  borderWidth: 2,
+		  pointRadius: 0,
+		  tension: 0.25,
+		  borderColor: color,
+		  fill: false,
+		});
+		return value;
+	  });
 
-      updateUI();
-      simChart.update();
-    }
+	  // 포트폴리오(평균) 초기값
+	  const initialPortfolio = assets.reduce((sum, val) => sum + val, 0) / assets.length;
+	  portfolioHistory.push(initialPortfolio);
 
-    function stepDay() {
-  const newPrices = assets.map((price, i) => {
-		const vol = Number($(`vol_${i}`).value) / 100;
-		const drift = Number($(`drift_${i}`).value) / 100;
-		const z = randn_bm();
-		let ret = drift + vol * z;
+	  simChart.data.datasets.push({
+		label: "포트폴리오(평균)",
+		data: [initialPortfolio],
+		borderWidth: 3,
+		pointRadius: 0,
+		tension: 0.25,
+		borderColor: "#111827",
+		fill: false,
+	  });
 
-		// '주식(위험)' 상장폐지 확률 1% 적용
+	  updateUI();
+	  simChart.update();
+	}
+
+
+	function stepDay() {
+	  const newPrices = assets.map((price, i) => {
+		let vol = Number($(`vol_${i}`).value) / 100;      // 연간 변동성(% -> 0~1)
+		let drift = Number($(`drift_${i}`).value) / 100;  // 연간 평균 수익률(% -> 0~1)
+
+		// 하루 단위 변환
+		const tradingDays = 252; // 연간 거래일 수
+		const dailyDrift = drift / tradingDays;
+		const dailyVol = vol / Math.sqrt(tradingDays);
+
+		// 정규분포 난수 생성 및 극단값 클리핑
+		let z = randn_bm();
+		z = Math.max(-3, Math.min(z, 3)); // -3σ ~ +3σ 제한
+
+		let ret = dailyDrift + dailyVol * z;
+
+		// '주식(위험)' 상장폐지 확률 0.3% 적용
 		const type = $(`type_${i}`).value;
 		if (type === "주식(위험)" && Math.random() < 0.003) {
 		  ret = -1; // 100% 하락 → 가격 0
 		}
 
-		const newP = Math.max(0, price * (1 + ret)); // 0으로 떨어질 수 있음
+		// 로그정규분포 적용
+		const newP = Math.max(0, price * Math.exp(ret));
 		histories[i].push(newP);
 		return newP;
 	  });
 
 	  assets = newPrices;
-	  const weights = assets.map((_, i) => Number($(`weight_${i}`).value) / 100);
-	  const portfolio = assets.reduce((acc, val, i) => acc + val * weights[i], 0);
+
+	  // 포트폴리오 평균 계산
+	  const portfolio = assets.reduce((acc, val) => acc + val, 0) / assets.length;
 	  portfolioHistory.push(portfolio);
 	  day++;
 
@@ -290,9 +320,11 @@
 		simChart.data.datasets[i].data.push(histories[i].at(-1));
 	  }
 	  simChart.data.datasets.at(-1).data.push(portfolio);
+
 	  updateUI();
 	  simChart.update("none");
 	}
+
 
     function run() {
       if (running) return;
@@ -318,15 +350,16 @@
 	  $("dayCount").innerText = day;
 
 	  // 현재 남은 금액 = 각 자산 가격 합
-	  const remaining = assets.reduce((sum, val) => sum + val, 0);
-	  $("portfolioValue").innerText = remaining.toFixed(2);
+	const remaining = assets.reduce((sum, val) => sum + val, 0);
+	$("portfolioValue").innerText = Math.round(remaining).toLocaleString(); // 정수 + 쉼표
+
 
 	  updateLabels();
 	}
 
     document.addEventListener("DOMContentLoaded", () => {
       const list = $("assetList");
-      let assetCount = 3;
+      let assetCount = 1;
       for (let i = 0; i < assetCount; i++) {
         const card = createAssetCard(i);
         list.appendChild(card);
