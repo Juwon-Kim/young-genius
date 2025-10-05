@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💰큰수의 법칙 - 동전던지기 시뮬레이션</title>
+    <title>동전던지기 시뮬레이션</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -74,23 +74,27 @@
                             class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg mt-2"
                         >
                     </div>
-                    <div class="pt-2 border-t pt-4 border-gray-200">
-                        <label for="speedSlider" class="block text-lg font-medium text-gray-700">
-                            자동 던지기 속도 (ms): 
-                            <span id="speedDisplay" class="font-bold text-indigo-600">50 ms</span>
-                        </label>
-                        <input 
-                            type="range" 
-                            id="speedSlider" 
-                            min="10" 
-                            max="1000" 
-                            step="10" 
-                            value="50" 
-                            oninput="updateFlipSpeed(this.value)"
-                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg mt-2"
-                        >
-                        <p class="text-xs text-gray-500 mt-1">최소 10ms, 최대 1000ms.</p>
-                    </div>
+					<div class="pt-2 border-t pt-4 border-gray-200">
+						<label for="speedSlider" class="block text-lg font-medium text-gray-700">
+							자동 던지기 속도(ms): 
+							<span id="speedDisplay" class="font-bold text-indigo-600">50</span>
+						</label>
+						<input 
+							type="range" 
+							id="speedSlider" 
+							min="10" 
+							max="1000" 
+							step="10" 
+							value="50" 
+							oninput="updateFlipSpeed(this.value)"
+							class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg mt-2"
+						>
+						<!-- 변경된 문구 -->
+						<div class="flex justify-between text-xs text-gray-500 mt-1 px-1">
+							<span>빠르게</span>
+							<span>느리게</span>
+						</div>
+					</div>
                     <div id="coinContainer" class="flex flex-col items-center space-y-4 pt-4">
                         <div 
                             id="coin" 
@@ -177,7 +181,7 @@
             else if (speed > 1000) speed = 1000;
 
             flipSpeed = speed;
-            $speedDisplay.textContent = `${flipSpeed} ms`;
+            $speedDisplay.textContent = `${flipSpeed}`;
             $speedSlider.value = flipSpeed;
 
             if (isAutoFlipping) {
