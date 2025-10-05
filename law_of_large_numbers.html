@@ -3,17 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>큰수의 법칙 - 동전 던지기 시뮬레이션</title>
+    <title>💰큰수의 법칙 - 동전던지기 시뮬레이션</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Inter 폰트 사용 */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f7f9fc;
         }
-        /* Custom styling for better visual appeal */
         .card {
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             transition: transform 0.2s;
@@ -29,91 +27,93 @@
             border-radius: 9999px;
             transition: width 0.3s ease-out;
         }
-        /* Canvas is important for the chart */
         #chartCanvas {
             max-width: 100%;
             height: auto;
-            border-radius: 1.5rem; /* rounded-3xl */
+            border-radius: 1.5rem;
             border: 4px solid #fff;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
-
-        /* --- Coin Flip Animation Styles --- */
         #coin {
             cursor: pointer;
             perspective: 1000px;
             transition: transform 0.05s ease-out;
-            will-change: transform; /* 성능 최적화 */
+            will-change: transform;
         }
-
-        /* 회전 시 글자가 뒤집히지 않도록, 최종은 항상 360도의 배수로 설정 */
         @keyframes flipCoin {
             0% { transform: rotateY(0deg) scale(1); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
             50% { transform: rotateY(540deg) scale(1.2) translateY(-20px); box-shadow: 0 30px 40px rgba(0,0,0,0.4); }
-            /* 1080deg (3바퀴) 회전으로 마무리하여 글자가 항상 정방향으로 보이게 함 */
             100% { transform: rotateY(1080deg) scale(1); box-shadow: 0 10px 20px rgba(0,0,0,0.2); } 
         }
-
-        /* Coin Face Styles */
-        .coin-heads {
-            background-color: #fcd34d; /* Yellow-400 */
-        }
-        .coin-tails {
-            background-color: #d1d5db; /* Gray-400 */
-        }
+        .coin-heads { background-color: #fcd34d; }
+        .coin-tails { background-color: #d1d5db; }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8 flex items-start justify-center">
-
     <div class="w-full max-w-4xl space-y-8">
-        <!-- Header -->
         <header class="text-center">
-            <h1 class="text-4xl font-extrabold text-gray-800 mb-2">💰 큰수의 법칙 - 동전 던지기 시뮬레이션</h1>
-            <p class="text-gray-500">시행 횟수에 따라 확률이 50%에 수렴하는 것을 관찰해보세요.</p>
+            <h1 class="text-4xl font-extrabold text-gray-800 mb-2">💰 동전던지기 시뮬레이션</h1>
+            <p class="text-gray-500">앞면 확률을 조정하고 속도를 설정하여 수렴 과정을 관찰해보세요.</p>
         </header>
-
-        <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <!-- 1. Stats and Controls (Side Panel) -->
             <div class="lg:col-span-1 space-y-6">
-
-                <!-- Control Card (User Interaction) -->
                 <div class="card bg-white p-6 rounded-3xl space-y-4">
                     <h2 class="text-2xl font-semibold text-gray-700">동전 던지기</h2>
-                    
-                    <!-- Coin Element for Clicking -->
+                    <div class="pt-2">
+                        <label for="probabilitySlider" class="block text-lg font-medium text-gray-700">
+                            앞면 확률 (P(H)): 
+                            <span id="probabilityDisplay" class="font-bold text-indigo-600">50%</span>
+                        </label>
+                        <input 
+                            type="range" 
+                            id="probabilitySlider" 
+                            min="0" 
+                            max="100" 
+                            value="50" 
+                            oninput="updateProbability(this.value)"
+                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg mt-2"
+                        >
+                    </div>
+                    <div class="pt-2 border-t pt-4 border-gray-200">
+                        <label for="speedSlider" class="block text-lg font-medium text-gray-700">
+                            자동 던지기 속도 (ms): 
+                            <span id="speedDisplay" class="font-bold text-indigo-600">50 ms</span>
+                        </label>
+                        <input 
+                            type="range" 
+                            id="speedSlider" 
+                            min="10" 
+                            max="1000" 
+                            step="10" 
+                            value="50" 
+                            oninput="updateFlipSpeed(this.value)"
+                            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg mt-2"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">최소 10ms, 최대 1000ms.</p>
+                    </div>
                     <div id="coinContainer" class="flex flex-col items-center space-y-4 pt-4">
                         <div 
                             id="coin" 
                             onclick="handleCoinFlip()" 
                             class="coin-heads w-32 h-32 rounded-full flex items-center justify-center text-5xl font-extrabold text-gray-800 shadow-xl transition duration-150 ease-in-out hover:scale-[1.02]"
                             style="transform-style: preserve-3d;"
-                        >
-                            ?
-                        </div>
+                        >?</div>
                         <p id="flipResultText" class="text-center text-xl font-bold h-8 text-gray-700">결과: -</p>
                     </div>
-
                     <button id="autoFlipButton" onclick="toggleAutoFlip()" class="flip-button w-full py-3 bg-green-500 text-white font-medium rounded-xl hover:bg-green-600 mt-4">
                         자동 던지기 시작
                     </button>
-
                     <button onclick="resetSimulation()" class="flip-button w-full py-3 bg-gray-400 text-white font-medium rounded-xl hover:bg-gray-500">
                         초기화
                     </button>
                 </div>
-                
-                <!-- Stats Card -->
                 <div class="card bg-white p-6 rounded-3xl space-y-4">
                     <h2 class="text-2xl font-semibold text-gray-700">통계</h2>
                     <div class="text-xl">
                         <p class="text-gray-600 font-medium">총 시행 횟수:</p>
                         <p id="totalFlips" class="text-4xl font-bold text-indigo-600">0</p>
                     </div>
-
                     <div class="space-y-2 pt-2">
-                        <!-- Heads Stats -->
                         <div class="flex justify-between items-center">
                             <span class="text-lg font-medium text-blue-600">앞면 (Heads)</span>
                             <span id="headsCount" class="text-2xl font-bold text-blue-600">0</span>
@@ -122,8 +122,6 @@
                             <div id="headsIndicator" class="indicator bg-blue-500" style="width: 0%;"></div>
                         </div>
                         <p id="headsRatio" class="text-right text-sm text-gray-500">0.00%</p>
-
-                        <!-- Tails Stats -->
                         <div class="flex justify-between items-center mt-4">
                             <span class="text-lg font-medium text-red-600">뒷면 (Tails)</span>
                             <span id="tailsCount" class="text-2xl font-bold text-red-600">0</span>
@@ -135,35 +133,20 @@
                     </div>
                 </div>
             </div>
-
-            <!-- 2. Chart Display -->
             <div class="lg:col-span-2 card bg-white p-6 rounded-3xl">
                 <h2 class="text-2xl font-semibold text-gray-700 mb-4 text-center">현재 비율 (원 그래프)</h2>
                 <div class="flex justify-center items-center">
                     <canvas id="chartCanvas" width="400" height="400" class="max-w-xs md:max-w-md"></canvas>
                 </div>
-                <p id="convergenceMessage" class="mt-4 text-center text-lg font-medium text-gray-600">
-                    <!-- 수렴 메시지가 여기에 표시됩니다. -->
-                </p>
+                <p id="convergenceMessage" class="mt-4 text-center text-lg font-medium text-gray-600"></p>
             </div>
         </div>
     </div>
 
     <script>
-        // 전역 상태 변수
-        let headsCount = 0;
-        let tailsCount = 0;
-        let totalFlips = 0;
-        let isAutoFlipping = false;
-        let isFlipping = false;
-        let autoFlipInterval;
-        let flipSpeed = 1; // 밀리초 단위
-        
-        // **공평한 동전: 앞면이 나올 확률은 50%로 고정**
-        const PROBABILITY_HEADS = 0.5; 
-        const TARGET_RATIO_PERCENT = 50;
+        let headsCount = 0, tailsCount = 0, totalFlips = 0, isAutoFlipping = false, isFlipping = false, autoFlipInterval, flipSpeed = 50;
+        let probabilityHeads = 0.5;
 
-        // DOM 요소 캐싱
         const $totalFlips = document.getElementById('totalFlips');
         const $headsCount = document.getElementById('headsCount');
         const $tailsCount = document.getElementById('tailsCount');
@@ -175,73 +158,64 @@
         const $convergenceMessage = document.getElementById('convergenceMessage');
         const $coin = document.getElementById('coin');
         const $flipResultText = document.getElementById('flipResultText');
-        
-        // 캔버스 설정 (전역 변수 재선언 필요)
+        const $probabilityDisplay = document.getElementById('probabilityDisplay'); 
+        const $speedDisplay = document.getElementById('speedDisplay'); 
+        const $speedSlider = document.getElementById('speedSlider');
+
         let canvas, ctx, center, radius;
 
-        /**
-         * 캔버스를 초기화하고 크기를 조정합니다.
-         */
+        function updateProbability(value) {
+            probabilityHeads = parseInt(value) / 100;
+            $probabilityDisplay.textContent = `${value}%`;
+            updateConvergenceMessage((headsCount / totalFlips) * 100); 
+            drawChart(); 
+        }
+
+        function updateFlipSpeed(value) {
+            let speed = parseInt(value);
+            if (isNaN(speed) || speed < 10) speed = 10;
+            else if (speed > 1000) speed = 1000;
+
+            flipSpeed = speed;
+            $speedDisplay.textContent = `${flipSpeed} ms`;
+            $speedSlider.value = flipSpeed;
+
+            if (isAutoFlipping) {
+                clearInterval(autoFlipInterval);
+                autoFlipInterval = setInterval(autoFlipStep, flipSpeed);
+            }
+        }
+
         function initializeCanvas() {
             canvas = document.getElementById('chartCanvas');
             ctx = canvas.getContext('2d');
-            
-            // 캔버스 크기 조정 (반응형 대응)
-            const chartContainer = document.getElementById('chartCanvas').parentElement;
-            const size = Math.min(chartContainer.offsetWidth, 400); // 최대 400px 제한
+            const chartContainer = canvas.parentElement;
+            const size = Math.min(chartContainer.offsetWidth, 400);
             canvas.width = size;
             canvas.height = size;
-            
-            // 변수 재설정
             center = canvas.width / 2;
             radius = canvas.width / 2 - 20;
         }
 
-        /**
-         * 애니메이션 없이 내부 상태와 디스플레이를 업데이트하는 기본 던지기 로직
-         * (자동 던지기 시 사용)
-         * @param {string} result - 'H' 또는 'T'
-         */
         function flipCoinNonAnimated(result) {
-            if (result === 'H') {
-                headsCount++;
-            } else {
-                tailsCount++;
-            }
+            if (result === 'H') headsCount++; else tailsCount++;
             totalFlips++;
-            
             updateDisplay();
             drawChart();
         }
 
-        /**
-         * 코인 클릭 시 애니메이션과 함께 던지기 로직을 실행합니다.
-         */
         function handleCoinFlip() {
-            // 자동 던지기 중이거나 이미 던지기 애니메이션 중이면 무시
             if (isAutoFlipping || isFlipping) return;
-
-            isFlipping = true; // <-- 던지기 시작: 플래그 활성화
-
-            // 결과 결정: 공평한 동전 확률(0.5) 사용
-            const result = Math.random() < PROBABILITY_HEADS ? 'H' : 'T';
-            
-            // 1. 애니메이션 시작 전 초기 상태 및 클래스 설정
+            isFlipping = true;
+            const result = Math.random() < probabilityHeads ? 'H' : 'T';
             $coin.textContent = '?';
-            $coin.style.transform = 'rotateY(0deg)'; // 초기화
-            // CSS 애니메이션 시작 (1080deg에서 종료됨)
-            $coin.style.animation = 'flipCoin 0.7s cubic-bezier(0.4, 0.0, 0.6, 1.0) forwards'; 
+            $coin.style.transform = 'rotateY(0deg)';
+            $coin.style.animation = 'flipCoin 0.7s cubic-bezier(0.4,0,0.6,1) forwards';
             $flipResultText.textContent = '던지는 중...';
             $coin.classList.remove('coin-heads', 'coin-tails'); 
-
-
-            // 2. 애니메이션 완료 후 상태 업데이트
             setTimeout(() => {
-                // 애니메이션 속성 제거 및 최종 위치(1080deg) 유지하여 글자를 정방향으로 고정
-                $coin.style.transform = 'rotateY(1080deg)'; 
-                $coin.style.animation = 'none'; // 애니메이션 종료 후 상태 유지
-
-                // 코인 앞/뒷면 표시 및 색상 변경
+                $coin.style.transform = 'rotateY(1080deg)';
+                $coin.style.animation = 'none';
                 if (result === 'H') {
                     $coin.textContent = '앞';
                     $coin.classList.add('coin-heads');
@@ -251,19 +225,12 @@
                     $coin.classList.add('coin-tails');
                     $coin.classList.remove('coin-heads'); 
                 }
-                
-                // 내부 통계 업데이트
                 flipCoinNonAnimated(result);
                 $flipResultText.textContent = `결과: ${result === 'H' ? '앞면' : '뒷면'}`;
-                
-                isFlipping = false; // <-- 던지기 완료: 플래그 비활성화
-
-            }, 700); // CSS 애니메이션 시간과 일치
+                isFlipping = false;
+            }, 700);
         }
 
-        /**
-         * 통계 수치를 DOM에 업데이트합니다.
-         */
         function updateDisplay() {
             $totalFlips.textContent = totalFlips.toLocaleString();
             $headsCount.textContent = headsCount.toLocaleString();
@@ -275,7 +242,6 @@
                 $headsIndicator.style.width = '0%';
                 $tailsIndicator.style.width = '0%';
                 $convergenceMessage.textContent = '동전을 던져 시뮬레이션을 시작하세요.';
-                // 초기화 시 코인 색상/텍스트 설정
                 $coin.textContent = '?';
                 $coin.classList.add('coin-heads');
                 $coin.classList.remove('coin-tails');
@@ -284,35 +250,22 @@
 
             const headsRatio = (headsCount / totalFlips) * 100;
             const tailsRatio = (tailsCount / totalFlips) * 100;
-            
             $headsRatio.textContent = `${headsRatio.toFixed(2)}%`;
             $tailsRatio.textContent = `${tailsRatio.toFixed(2)}%`;
-            
             $headsIndicator.style.width = `${headsRatio}%`;
             $tailsIndicator.style.width = `${tailsRatio}%`;
-
             updateConvergenceMessage(headsRatio);
         }
 
-        /**
-         * 원 그래프를 현재 비율에 맞게 그립니다.
-         */
         function drawChart() {
-            // 캔버스 초기화 체크
             if (!ctx || !canvas) return; 
-
-            // 캔버스 지우기
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             if (totalFlips === 0) {
-                // 시행 횟수가 0일 때 초기 상태 표시
                 ctx.beginPath();
                 ctx.arc(center, center, radius, 0, 2 * Math.PI);
-                ctx.fillStyle = '#e5e7eb'; // Gray-200
+                ctx.fillStyle = '#e5e7eb';
                 ctx.fill();
                 ctx.closePath();
-                
-                // 중앙에 텍스트 표시
                 ctx.fillStyle = '#6b7280';
                 ctx.font = '20px Inter, sans-serif';
                 ctx.textAlign = 'center';
@@ -322,97 +275,79 @@
             }
 
             const headsRatio = headsCount / totalFlips;
-            // 각도 계산 (2 * PI는 360도)
             const headsAngle = 2 * Math.PI * headsRatio;
-            
-            // 1. 뒷면(Tails) 그리기 (빨간색)
+
             ctx.beginPath();
             ctx.moveTo(center, center);
             ctx.arc(center, center, radius, 0, 2 * Math.PI);
-            ctx.fillStyle = '#ef4444'; // Red-500
+            ctx.fillStyle = '#ef4444';
             ctx.fill();
             ctx.closePath();
 
-            // 2. 앞면(Heads) 그리기 (파란색)
             ctx.beginPath();
             ctx.moveTo(center, center);
-            // 시작 각도는 0 (오른쪽), 끝 각도는 headsAngle
             ctx.arc(center, center, radius, 0, headsAngle); 
-            ctx.fillStyle = '#3b82f6'; // Blue-500
+            ctx.fillStyle = '#3b82f6';
             ctx.fill();
             ctx.closePath();
 
-            // 3. 중심선 그리기 (시각적으로 분할)
             ctx.beginPath();
             ctx.moveTo(center, center);
             ctx.lineTo(center + radius * Math.cos(headsAngle), center + radius * Math.sin(headsAngle));
-            ctx.strokeStyle = '#fff'; // White separator
+            ctx.strokeStyle = '#fff';
             ctx.lineWidth = 2;
             ctx.stroke();
             ctx.closePath();
 
-            // 4. 중앙에 현재 비율 텍스트 표시 (옵션)
-            const ratioDiff = Math.abs(headsRatio * 100 - TARGET_RATIO_PERCENT);
-            
+            const targetRatioPercent = (probabilityHeads * 100).toFixed(0);
+            const ratioDiff = Math.abs(headsRatio * 100 - targetRatioPercent);
             ctx.fillStyle = '#1f2937';
             ctx.font = 'bold 20px Inter, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`목표: ${TARGET_RATIO_PERCENT}%`, center, center - 25);
+            ctx.fillText(`P(H): ${targetRatioPercent}%`, center, center - 25);
+            const dominanceText = headsCount > tailsCount ? '앞면 우세' : (tailsCount > headsCount ? '뒷면 우세' : '동률');
             ctx.font = 'bold 24px Inter, sans-serif';
-            ctx.fillText(`${headsRatio * 100 > TARGET_RATIO_PERCENT ? '앞면 우세' : '뒷면 우세'}`, center, center + 10);
+            ctx.fillText(dominanceText, center, center + 10);
             ctx.font = '16px Inter, sans-serif';
             ctx.fillText(`목표 대비 차이: ${ratioDiff.toFixed(2)}%`, center, center + 40);
         }
 
-        /**
-         * 수렴 정도에 따른 메시지를 업데이트합니다.
-         * @param {number} headsRatio 현재 앞면 비율 (0-100)
-         */
         function updateConvergenceMessage(headsRatio) {
-            const diff = Math.abs(headsRatio - TARGET_RATIO_PERCENT);
-            
+            const targetRatio = probabilityHeads * 100;
+            const diff = Math.abs(headsRatio - targetRatio);
             const total = totalFlips.toLocaleString();
 
             if (totalFlips < 100) {
-                 $convergenceMessage.className = 'mt-4 text-center text-lg font-medium text-gray-600';
-                 $convergenceMessage.textContent = `시행 횟수(${total}회)가 적어 편차가 클 수 있습니다. 더 던져보세요!`;
-            } else if (diff < 1) { // 목표 비율의 1% 이내
+                $convergenceMessage.className = 'mt-4 text-center text-lg font-medium text-gray-600';
+                $convergenceMessage.textContent = `시행 횟수(${total}회)가 적어 편차가 클 수 있습니다. 더 던져보세요!`;
+            } else if (diff < 1) {
                 $convergenceMessage.className = 'mt-4 text-center text-lg font-bold text-green-600 animate-pulse';
-                $convergenceMessage.textContent = `⭐ 확률 수렴 중! (${total}회) 현재 비율이 50%에 아주 가깝습니다!`;
-            } else if (diff < 5) { // 목표 비율의 5% 이내
+                $convergenceMessage.textContent = `⭐ 확률 수렴 중! (${total}회) 현재 비율이 설정된 ${targetRatio.toFixed(0)}%에 아주 가깝습니다!`;
+            } else if (diff < 5) {
                 $convergenceMessage.className = 'mt-4 text-center text-lg font-semibold text-amber-600';
                 $convergenceMessage.textContent = `균형을 찾아가고 있습니다! (${total}회)`;
             } else {
-                 $convergenceMessage.className = 'mt-4 text-center text-lg font-medium text-gray-600';
-                 $convergenceMessage.textContent = `시행 횟수를 늘려가면 이론적 확률 50%에 가까워질 것입니다.`;
+                $convergenceMessage.className = 'mt-4 text-center text-lg font-medium text-gray-600';
+                $convergenceMessage.textContent = `시행 횟수를 늘려가면 설정된 ${targetRatio.toFixed(0)}%에 가까워질 것입니다.`;
             }
         }
 
-        /**
-         * 자동 던지기 로직 (애니메이션 없음)
-         */
         function autoFlipStep() {
-            // 결과 결정: 공평한 동전 확률(0.5) 사용
-            const result = Math.random() < PROBABILITY_HEADS ? 'H' : 'T';
+            const result = Math.random() < probabilityHeads ? 'H' : 'T';
             flipCoinNonAnimated(result);
             $flipResultText.textContent = '자동 던지기 중...';
         }
 
-        /**
-         * 자동 던지기 기능을 시작하거나 중지합니다.
-         */
         function toggleAutoFlip() {
             if (isAutoFlipping) {
-                // 중지
                 clearInterval(autoFlipInterval);
                 $autoFlipButton.textContent = '자동 던지기 시작';
                 $autoFlipButton.classList.remove('bg-red-500', 'hover:bg-red-600');
                 $autoFlipButton.classList.add('bg-green-500', 'hover:bg-green-600');
-                const lastResult = headsCount > tailsCount ? '앞면 우세' : '뒷면 우세';
-                $flipResultText.textContent = `결과: ${totalFlips === 0 ? '-' : lastResult}`;
+                const lastResult = totalFlips > 0 ? (headsCount > tailsCount ? '앞면 우세' : '뒷면 우세') : '-';
+                $flipResultText.textContent = `결과: ${lastResult}`;
             } else {
-                // 시작
                 autoFlipInterval = setInterval(autoFlipStep, flipSpeed);
                 $autoFlipButton.textContent = '자동 던지기 중지';
                 $autoFlipButton.classList.remove('bg-green-500', 'hover:bg-green-600');
@@ -421,37 +356,25 @@
             isAutoFlipping = !isAutoFlipping;
         }
 
-        /**
-         * 시뮬레이션을 초기 상태로 되돌립니다.
-         */
         function resetSimulation() {
-            if (isAutoFlipping) {
-                toggleAutoFlip(); // 자동 던지기 중지
-            }
-            headsCount = 0;
-            tailsCount = 0;
-            totalFlips = 0;
-            isFlipping = false;
-            $coin.style.transform = 'rotateY(0deg)';
-            $coin.style.animation = 'none'; // 애니메이션 초기화
-            $flipResultText.textContent = '결과: -';
-            updateDisplay(); // updateDisplay에서 코인 색상/텍스트 초기화됨
+            clearInterval(autoFlipInterval);
+            isAutoFlipping = false;
+            headsCount = 0; tailsCount = 0; totalFlips = 0;
+            updateDisplay();
             drawChart();
-            console.log("시뮬레이션이 초기화되었습니다.");
+            $autoFlipButton.textContent = '자동 던지기 시작';
+            $autoFlipButton.classList.remove('bg-red-500', 'hover:bg-red-600');
+            $autoFlipButton.classList.add('bg-green-500', 'hover:bg-green-600');
         }
 
-        // 초기 로드 시 한 번 실행
         window.onload = function() {
             initializeCanvas();
+            updateProbability(document.getElementById('probabilitySlider').value);
+            updateFlipSpeed($speedSlider.value);
             updateDisplay();
             drawChart();
         }
-
-        // 창 크기 변경 시 캔버스 다시 그리기 (반응형 대응)
-        window.addEventListener('resize', function() {
-            initializeCanvas(); // 캔버스 크기 재조정
-            drawChart();
-        });
+        window.addEventListener('resize', initializeCanvas);
     </script>
 </body>
 </html>
