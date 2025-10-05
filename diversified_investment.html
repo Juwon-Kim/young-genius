@@ -100,7 +100,7 @@
       "채권": { vol: 5, drift: 5.5, color: "#FB923C" },
 	  "금": { vol: 7, drift: 8, color: "#FACC15" },
       "주식(안정)": { vol: 11, drift: 10, color: "#3B82F6" },
-      "주식(위험)": { vol: 25, drift: 30, color: "#EF4444" },
+      "주식(위험)": { vol: 35, drift: 30, color: "#EF4444" },
     };
 
     let assets = [];
@@ -294,16 +294,17 @@
 		let z = randn_bm();
 		z = Math.max(-3, Math.min(z, 3)); // -3σ ~ +3σ 제한
 
-		let ret = dailyDrift + dailyVol * z;
+		// 하루 수익률 계산 (단순 곱셈 방식으로 상승/하락 대칭)
+		let dailyReturn = dailyDrift + dailyVol * z;
 
 		// '주식(위험)' 상장폐지 확률 0.3% 적용
 		const type = $(`type_${i}`).value;
-		if (type === "주식(위험)" && Math.random() < 0.003) {
-		  ret = -1; // 100% 하락 → 가격 0
+		if (type === "주식(위험)" && Math.random() < 0.002) {
+		  dailyReturn = -1; // 100% 하락 → 가격 0
 		}
 
-		// 로그정규분포 적용
-		const newP = Math.max(0, price * Math.exp(ret));
+		// 가격 업데이트
+		const newP = Math.max(0, price * (1 + dailyReturn));
 		histories[i].push(newP);
 		return newP;
 	  });
@@ -324,6 +325,7 @@
 	  updateUI();
 	  simChart.update("none");
 	}
+
 
 
     function run() {
