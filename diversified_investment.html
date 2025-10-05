@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🪙 분산투자 시뮬레이터</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+      html,body{height:100%;}
+  .card {background: linear-gradient(180deg,#fff 0%, #f7fbff 100%);}
+  @media (max-width:640px){ #chartCard {height:320px} }
+  @media (min-width:641px){ #chartCard {height:480px} }
+
+  /* 자산목록 스크롤 적용 */
+  #assetList {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+    .card {background: linear-gradient(180deg,#fff 0%, #f7fbff 100%);}
+    @media (max-width:640px){ #chartCard {height:320px} }
+    @media (min-width:641px){ #chartCard {height:480px} }
+  </style>
+</head>
+<body class="bg-sky-50 min-h-screen flex items-center justify-center p-4">
+  <main class="w-full max-w-6xl">
+    <header class="mb-4">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-sky-800">🪙 분산투자 시뮬레이터 — 자산별 위험도 체험</h1>
+      <p class="mt-1 text-sky-700">분산투자를 하면 포트폴리오의 움직임이 더 안정되는 것을 직접 볼 수 있어요!</p>
+    </header>
+
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <!-- Controls -->
+      <div class="card p-4 rounded-2xl shadow-md lg:col-span-1">
+        <h2 class="font-bold text-sky-700">설정</h2>
+        <div class="mt-3 space-y-3">
+          <label class="block">
+            <div class="text-sm text-sky-600">초기 투자금</div>
+            <input id="initialCapital" type="number" min="100" value="1000" class="mt-1 w-full p-2 rounded-lg border" />
+          </label>
+
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-sky-700">자산 목록</h3>
+            <div>
+              <button id="addAsset" class="px-2 py-1 rounded bg-sky-500 text-white text-sm mr-1">+ 추가</button>
+              <button id="removeAsset" class="px-2 py-1 rounded bg-red-400 text-white text-sm">− 삭제</button>
+            </div>
+          </div>
+
+          <div id="assetList" class="space-y-2"></div>
+
+          <label class="block mt-3">
+            <div class="text-sm text-sky-600">시뮬레이션 속도 (ms/일)</div>
+            <input id="speed" type="range" min="20" max="1000" step="10" value="150" class="w-full" />
+            <div class="text-xs text-sky-500 mt-1">현재: <span id="speedLabel">150</span> ms</div>
+          </label>
+
+          <div class="flex gap-2 mt-2">
+            <button id="startBtn" class="flex-1 py-2 rounded-xl bg-sky-600 text-white font-bold">▶ 시작</button>
+            <button id="pauseBtn" class="flex-1 py-2 rounded-xl bg-yellow-400 text-sky-800 font-bold">⏸ 일시정지</button>
+            <button id="resetBtn" class="flex-1 py-2 rounded-xl bg-red-400 text-white font-bold">⟲ 초기화</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div id="chartCard" class="card p-3 rounded-2xl shadow-md lg:col-span-2 h-96">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-sky-700">실시간 차트</h2>
+          <div class="text-sm text-sky-600">일 단위 변동(시뮬레이션)</div>
+        </div>
+        <canvas id="simChart" class="w-full mt-3 h-4/5"></canvas>
+        <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div class="p-2 rounded border bg-white">
+            <div class="text-xs text-sky-500">총일수</div>
+            <div id="dayCount" class="font-bold text-lg">0</div>
+          </div>
+          <div class="p-2 rounded border bg-white">
+            <div class="text-xs text-sky-500">포트폴리오 현재가</div>
+            <div id="portfolioValue" class="font-bold text-lg">0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="mt-4 p-3 text-sky-700 card rounded-2xl shadow-sm">
+      <h3 class="font-semibold">간단한 설명</h3>
+      <ol class="list-decimal list-inside text-sm mt-1 space-y-1">
+        <li>각 자산은 위험도(변동성)와 기대수익률이 다를 수 있어요.</li>
+        <li>비중을 나누면 한 자산의 손해를 다른 자산이 보완해 줄 수 있어요.</li>
+        <li>이 페이지는 교육용이에요. 실제 투자 전에는 어른과 상의하세요.</li>
+      </ol>
+    </footer>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const assetTypes = {
+      "예금/적금": { vol: 0.2, drift: 0.2, color: "#22C55E" },
+      "금": { vol: 1.0, drift: 0.4, color: "#FACC15" },
+      "채권": { vol: 2.0, drift: 0.8, color: "#FB923C" },
+      "주식(안정)": { vol: 9.0, drift: 1.2, color: "#3B82F6" },
+      "주식(위험)": { vol: 20.0, drift: 2.5, color: "#EF4444" },
+    };
+
+    let assets = [];
+    let histories = [];
+    let portfolioHistory = [];
+    let day = 0;
+    let timer = null;
+    let running = false;
+
+    const ctx = $("simChart").getContext("2d");
+    const simChart = new Chart(ctx, {
+      type: "line",
+      data: { labels: [], datasets: [] },
+      options: {
+		 plugins: {
+			tooltip: {
+			  enabled: true,
+			  mode: 'index',
+			  intersect: false,
+			  external: (context) => {
+				const tooltipEl = document.getElementById('chartjs-tooltip');
+				if (!tooltipEl) return;
+				const {chart, tooltip} = context;
+
+				if (tooltip.opacity === 0) {
+				  tooltipEl.style.opacity = 0;
+				  return;
+				}
+
+				tooltipEl.style.opacity = 1;
+				tooltipEl.style.left = chart.canvas.offsetLeft + tooltip.caretX + 'px';
+				tooltipEl.style.top = chart.canvas.offsetTop + tooltip.caretY + 'px';
+				tooltipEl.innerHTML = tooltip.body.map(b => b.lines).join('<br>');
+			  }
+			}
+		  },
+		  interaction: {
+			intersect: false,
+			mode: 'index'
+		  },
+        animation: { duration: 0 },
+        responsive: true,
+        plugins: { legend: { position: "bottom" } },
+        scales: {
+          x: { title: { display: true, text: "일" } },
+          y: { title: { display: true, text: "가격" } },
+        },
+      },
+    });
+
+    function randn_bm() {
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+
+	function createAssetCard(index) {
+	  const card = document.createElement("div");
+	  card.className = "p-3 border rounded-xl bg-white shadow-sm";
+	  const typeOptions = Object.keys(assetTypes)
+		.map((k) => `<option value="${k}">${k}</option>`)
+		.join("");
+	  card.innerHTML = `
+		<div class="flex justify-between items-center">
+		  <span class="font-semibold text-sky-700">자산 ${index + 1}</span>
+		</div>
+		<label class="block text-xs text-sky-600 mt-1">자산 유형
+		  <select id="type_${index}" class="mt-1 w-full border rounded p-1 text-sm">${typeOptions}</select>
+		</label>
+		<div class="mt-2 text-xs text-sky-600">투자 비중(%)</div>
+		<input type="range" id="weight_${index}" min="0" max="100" step="1" value="${(100 / 3).toFixed(0)}" class="w-full">
+		<div class="text-xs text-sky-500">현재: <span id="weightLabel_${index}">${(100 / 3).toFixed(0)}</span>%</div>
+		
+		<div class="mt-2 text-xs text-sky-600">변동성(%)</div>
+		<input type="range" id="vol_${index}" min="0" max="20" step="0.1" class="w-full">
+		<div class="text-xs text-sky-500">현재: <span id="volLabel_${index}"></span>%</div>
+
+		<div class="mt-2 text-xs text-sky-600">평균 수익률(%)</div>
+		<input type="range" id="drift_${index}" min="-0.5" max="5" step="0.05" class="w-full">
+		<div class="text-xs text-sky-500">현재: <span id="driftLabel_${index}"></span>%</div>
+	  `;
+	  return card;
+	}
+
+
+    function updateAssetValues(i) {
+      const type = $(`type_${i}`).value;
+      const { vol, drift } = assetTypes[type];
+      $(`vol_${i}`).value = vol;
+      $(`drift_${i}`).value = drift;
+      $(`volLabel_${i}`).innerText = vol;
+      $(`driftLabel_${i}`).innerText = drift;
+	  initSimulation();
+    }
+
+    function updateLabels() {
+      assets.forEach((_, i) => {
+        $(`volLabel_${i}`).innerText = $(`vol_${i}`).value;
+        $(`driftLabel_${i}`).innerText = $(`drift_${i}`).value;
+        $(`weightLabel_${i}`).innerText = $(`weight_${i}`).value;
+      });
+    }
+
+    function normalizeWeights(changedIndex) {
+      const weights = assets.map((_, i) => Number($(`weight_${i}`).value));
+      const sum = weights.reduce((a, b) => a + b, 0);
+      if (sum > 100) {
+        const over = sum - 100;
+        const adjusted = Math.max(0, weights[changedIndex] - over);
+        $(`weight_${changedIndex}`).value = adjusted;
+      }
+      updateLabels();
+    }
+
+    function initSimulation() {
+      cancelRun();
+      day = 0;
+      const initial = Number($("initialCapital").value) || 1000;
+      histories = [];
+      portfolioHistory = [initial];
+
+      const count = assets.length;
+      assets = [];
+
+      simChart.data.labels = [0];
+      simChart.data.datasets = [];
+
+      assets = Array.from({ length: count }, (_, i) => {
+        const type = $(`type_${i}`).value;
+        const { color } = assetTypes[type];
+        const weight = Number($(`weight_${i}`).value) / 100;
+        const value = initial * weight;
+        histories.push([value]);
+        simChart.data.datasets.push({
+          label: `${type}`,
+          data: [value],
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.25,
+          borderColor: color,
+          fill: false,
+        });
+        return value;
+      });
+
+      simChart.data.datasets.push({
+        label: "포트폴리오(평균)",
+        data: [initial],
+        borderWidth: 3,
+        pointRadius: 0,
+        tension: 0.25,
+        borderColor: "#111827",
+        fill: false,
+      });
+
+      updateUI();
+      simChart.update();
+    }
+
+    function stepDay() {
+  const newPrices = assets.map((price, i) => {
+		const vol = Number($(`vol_${i}`).value) / 100;
+		const drift = Number($(`drift_${i}`).value) / 100;
+		const z = randn_bm();
+		let ret = drift + vol * z;
+
+		// '주식(위험)' 상장폐지 확률 1% 적용
+		const type = $(`type_${i}`).value;
+		if (type === "주식(위험)" && Math.random() < 0.003) {
+		  ret = -1; // 100% 하락 → 가격 0
+		}
+
+		const newP = Math.max(0, price * (1 + ret)); // 0으로 떨어질 수 있음
+		histories[i].push(newP);
+		return newP;
+	  });
+
+	  assets = newPrices;
+	  const weights = assets.map((_, i) => Number($(`weight_${i}`).value) / 100);
+	  const portfolio = assets.reduce((acc, val, i) => acc + val * weights[i], 0);
+	  portfolioHistory.push(portfolio);
+	  day++;
+
+	  simChart.data.labels.push(day);
+	  for (let i = 0; i < assets.length; i++) {
+		simChart.data.datasets[i].data.push(histories[i].at(-1));
+	  }
+	  simChart.data.datasets.at(-1).data.push(portfolio);
+	  updateUI();
+	  simChart.update("none");
+	}
+
+    function run() {
+      if (running) return;
+      running = true;
+      const delay = Number($("speed").value);
+      timer = setInterval(stepDay, delay);
+    }
+
+    function cancelRun() {
+      running = false;
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    function reset() {
+      initSimulation();
+    }
+
+	function updateUI() {
+	  $("speedLabel").innerText = $("speed").value;
+	  $("dayCount").innerText = day;
+
+	  // 현재 남은 금액 = 각 자산 가격 합
+	  const remaining = assets.reduce((sum, val) => sum + val, 0);
+	  $("portfolioValue").innerText = remaining.toFixed(2);
+
+	  updateLabels();
+	}
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const list = $("assetList");
+      let assetCount = 3;
+      for (let i = 0; i < assetCount; i++) {
+        const card = createAssetCard(i);
+        list.appendChild(card);
+        assets.push(null);
+        updateAssetValues(i);
+      }
+
+      list.addEventListener("change", (e) => {
+        if (e.target.id.startsWith("type_")) {
+          const idx = Number(e.target.id.split("_")[1]);
+          updateAssetValues(idx);
+        }
+      });
+
+      list.addEventListener("input", (e) => {
+        if (e.target.id.startsWith("weight_")) {
+          const idx = Number(e.target.id.split("_")[1]);
+          normalizeWeights(idx);
+        }
+        updateLabels();
+      });
+
+      $("addAsset").addEventListener("click", () => {
+        if (assets.length >= 10) return;
+        const idx = assets.length;
+        const card = createAssetCard(idx);
+        $("assetList").appendChild(card);
+        assets.push(null);
+        updateAssetValues(idx);
+        initSimulation();
+      });
+
+      $("removeAsset").addEventListener("click", () => {
+        if (assets.length <= 1) return;
+        assets.pop();
+        $("assetList").removeChild($("assetList").lastElementChild);
+        initSimulation();
+      });
+
+      $("speed").addEventListener("input", () => {
+        $("speedLabel").innerText = $("speed").value;
+        if (running) {
+          cancelRun();
+          run();
+        }
+      });
+
+      $("startBtn").onclick = run;
+      $("pauseBtn").onclick = cancelRun;
+      $("resetBtn").onclick = reset;
+      $("initialCapital").addEventListener("change", initSimulation);
+
+      initSimulation();
+    });
+  </script>
+</body>
+</html>
