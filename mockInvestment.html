@@ -189,36 +189,61 @@
       updateRateLabels();
     });
 
-    calcBtn.addEventListener('click',()=>{
-      const seed=Math.max(0,Number(seedInput.value)||0);
-      const rows=Array.from(yearsGrid.children);
-      if(rows.length===0){alert('연별 설정을 먼저 생성해주세요.');return;}
-      let total=seed;
-      const labels=[];const data=[];
-      rows.forEach((r,idx)=>{
-        const val=Number(r.querySelector('.rate').value)||0;
-        const rate=(unitType.value==='percent')?(1+val/100):val;
-        const add=Math.max(0,Number(r.querySelector('.add').value)||0);
-        total=(total+add)*rate;
-        const unit = periodUnit.value==='year' ? '년 차' : '개월 차';
-        labels.push((idx+1)+unit);
-        data.push(Math.round(total));
-      });
-      const ctx=document.getElementById('resultChart').getContext('2d');
-      if(chart)chart.destroy();
-      chart=new Chart(ctx,{
-        type:'line',
-        data:{labels,datasets:[{label:'총액(원)',data,fill:true,tension:0.25}]},
-        options:{responsive:true,scales:{y:{beginAtZero:true,ticks:{callback:v=>v.toLocaleString()}}}}
-      });
-      document.getElementById('summary').innerHTML=`최종 총액: ${data[data.length-1].toLocaleString()}원`;
-    });
+calcBtn.addEventListener('click', () => {
+  const seed = Math.max(0, Number(seedInput.value) || 0);
+  const rows = Array.from(yearsGrid.children);
+  if (rows.length === 0) {
+    alert('연별 설정을 먼저 생성해주세요.');
+    return;
+  }
 
-    resetBtn.addEventListener('click',()=>{
-      seedInput.value=100000;yearsInput.value=5;periodUnit.value='year';
-      yearsGrid.innerHTML='';if(chart)chart.destroy();document.getElementById('summary').innerHTML='';
-      updatePeriodLabel();
-    });
+  let total = seed;
+  const labels = [];
+  const data = [];
+
+  // ✅ 0년차 먼저 푸시
+  const unit = periodUnit.value === 'year' ? '년 차' : '개월 차';
+  labels.push('0' + unit);
+  data.push(Math.round(total));
+
+  // ✅ 1년차부터 계산 시작
+  rows.forEach((r, idx) => {
+    const val = Number(r.querySelector('.rate').value) || 0;
+    const rate = (unitType.value === 'percent') ? (1 + val / 100) : val;
+    const add = Math.max(0, Number(r.querySelector('.add').value) || 0);
+    total = (total + add) * rate;
+    labels.push((idx + 1) + unit);
+    data.push(Math.round(total));
+  });
+
+  const ctx = document.getElementById('resultChart').getContext('2d');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: '총액(원)',
+        data,
+        fill: true,
+        tension: 0.25
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: v => v.toLocaleString()
+          }
+        }
+      }
+    }
+  });
+
+  document.getElementById('summary').innerHTML = `최종 총액: ${data[data.length - 1].toLocaleString()}원`;
+});
 
     generateRows();
   </script>
