@@ -1,197 +1,98 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>💰 복리의 마법 - (고정) 복리 시뮬레이터</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: "Comic Sans MS", sans-serif;
-      background-color: #f0f4f8;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    h1 {
-      color: #000000;
-      margin-bottom: 0px;
-      font-size: 2em;
-    }
-
-    p {
-      color: #7f7e7e;
-      margin-top: 0px;
-      margin-bottom: 20px;
-      font-size: 0.9em;
-    }
-
-    .container {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
-      width: 100%;
-      max-width: 1000px;
-    }
-
-    .card {
-      background: #ffffff;
-      border-radius: 15px;
-      box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
-      padding: 20px;
-      width: 400px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .card label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 1.1em;
-      margin-bottom: 5px;
-    }
-
-    .input-unit {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    input[type="number"], select {
-      padding: 6px 10px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      width: 120px;
-      text-align: right;
-      font-size: 1em;
-      background-color: #ffffff;
-    }
-
-    select {
-      width: 130px;
-      text-align: center;
-    }
-
-    button {
-      background-color: #34c759;
-      border: none;
-      border-radius: 12px;
-      padding: 10px 20px;
-      font-size: 1em;
-      cursor: pointer;
-      color: white;
-      font-weight: bold;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      background-color: #28a745;
-    }
-
-    .radio-group, .mode-selector {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 10px;
-      font-size: 1em;
-    }
-
-    canvas {
-      background-color: #ffffff;
-      border-radius: 15px;
-      box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 800px;
-      padding: 0px;
-    }
-
-    .option-group {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .input-container {
-      background: #ffffff;
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
-    }
-
-    .chart-card {
-      background: #ffffff;
-      border-radius: 15px;
-      padding: 0px;
-      width: 800px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💰 거듭제곱의 비밀</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+  body { font-family: 'Inter', sans-serif; background-color: #f0f4f8; }
+  button { transition: 0.2s; }
+</style>
 </head>
-<body>
+<body class="min-h-screen p-4 md:p-8 flex justify-center">
 
-<h1>💰 복리의 마법 - (고정) 복리 시뮬레이터</h1>
-<p>처음 투자금과 수익율을 입력하고, 시간이 지나면서 돈이 어떻게 불어나는지 확인해보세요.</p>
+<div class="w-full max-w-3xl space-y-6">
 
-<div class="container">
+  <!-- 헤더 -->
+  <header class="text-center">
+    <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">💰 거듭제곱의 비밀</h1>
+    <p class="text-gray-500 mt-2 md:mt-1 text-sm md:text-base">시드머니와 수익률(비)을 입력하고 시간에 따른 성장 그래프를 확인하세요.</p>
+  </header>
 
-  <div class="card input-container">
-    <label>
-      <span>시드머니 (🌱):</span>
-      <div class="input-unit">
-        <input id="seed" type="number" value="10000">
+  <!-- 입력폼 카드 -->
+  <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
+    
+    <!-- 시드머니 -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-2">
+      <label class="font-medium text-gray-700">🌱 시드머니:</label>
+      <div class="flex items-center gap-2 w-full md:w-40">
+        <input id="seed" type="number" value="10000" class="w-full p-2 rounded-xl border border-gray-300 text-right text-gray-700">
         <span>원</span>
       </div>
-    </label>
-    <!-- ✅ 수익 단위 선택 (퍼센트 / 배) -->
-    <label>
-      <span>단위:</span>
-      <label><input type="radio" name="rateMode" value="ratio" checked> 수익비(배)</label>
-      <label><input type="radio" name="rateMode" value="percent"> 수익률(%)</label>
-    </label>
-    <label>
-      <span>고정 수익율 :</span>
-      <div class="input-unit">
-        <input id="rate" type="number" value="2" step="0.1">
-        <span id="rateUnitLabel">배</span>
-      </div>
-    </label>
+    </div>
 
-    <div class="option-group">
-      <label>투자 기간: 
-        <select id="count"></select>
-      </label>
-      <label>단위:
-        <select id="unit">
+    <!-- 수익 단위 -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-2">
+      <span class="font-medium text-gray-700">단위:</span>
+      <div class="flex gap-4">
+        <label class="flex items-center gap-1"><input type="radio" name="rateMode" value="percent" checked> 수익률(%)</label>
+        <label class="flex items-center gap-1"><input type="radio" name="rateMode" value="ratio"> 수익비(배)</label>
+      </div>
+    </div>
+
+    <!-- 고정 수익률 -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-2">
+      <label class="font-medium text-gray-700">고정 수익률(비):</label>
+      <div class="flex items-center gap-2 w-full md:w-40">
+        <input id="rate" type="number" value="100" step="0.1" class="w-full p-2 rounded-xl border border-gray-300 text-right text-gray-700">
+        <span id="rateUnitLabel">%</span>
+      </div>
+    </div>
+
+    <!-- 투자 기간/단위 -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-2">
+      <div class="flex items-center gap-2">
+        <label class="font-medium text-gray-700">투자 기간:</label>
+        <select id="count" class="p-2 rounded-xl border border-gray-300 text-gray-700"></select>
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="font-medium text-gray-700">단위:</label>
+        <select id="unit" class="p-2 rounded-xl border border-gray-300 text-gray-700">
           <option value="day">일</option>
           <option value="month">월</option>
           <option value="year" selected>년</option>
         </select>
-      </label>
+      </div>
     </div>
 
-    <div class="radio-group">
-      <label><input type="radio" name="chartType" value="line" checked> 선그래프</label>
-      <label><input type="radio" name="chartType" value="bar"> 막대그래프</label>
+    <!-- 계산 방식 선택 -->
+    <div class="flex justify-center gap-6 mt-2">
+      <label class="flex items-center gap-1"><input type="radio" name="calcType" value="compound" checked> 복리</label>
+      <label class="flex items-center gap-1"><input type="radio" name="calcType" value="simple"> 단리</label>
+      <label class="flex items-center gap-1"><input type="radio" name="calcType" value="both"> 복리+단리</label>
     </div>
 
-    <button id="generate">🔍 조회하기</button>
+    <!-- 그래프 타입 -->
+    <div class="flex justify-center gap-6 mt-2">
+      <label class="flex items-center gap-1"><input type="radio" name="chartType" value="line" checked> 선그래프</label>
+      <label class="flex items-center gap-1"><input type="radio" name="chartType" value="bar"> 막대그래프</label>
+    </div>
+
+    <!-- 조회 버튼 -->
+    <button id="generate" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl mt-4">🔍 조회하기</button>
+
   </div>
 
-  <div class="chart-card">
-    <canvas id="growthChart"></canvas>
+  <!-- 차트 카드 -->
+  <div class="bg-white p-6 rounded-3xl shadow-md">
+    <canvas id="growthChart" class="w-full h-64 md:h-80"></canvas>
   </div>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   // 표시 개수 select box 채우기
   const countSelect = document.getElementById("count");
@@ -205,20 +106,38 @@
 
   let chart;
 
-  function calculateCompound(seed, rate, rateMode, unit, count) {
+  function calculateCompound(seed, rate, rateMode, unit, count, calcType) {
     const labels = [];
     const data = [];
+    const dataSimple = []; // 단리용
     let total = seed;
+    let totalSimple = seed;
     const unitText = unit === "day" ? "일" : unit === "month" ? "개월" : "년";
 
     labels.push(`0${unitText}`);
-    data.push(Math.round(total));
+    if(calcType === "both") {
+      data.push({compound: Math.round(total), simple: Math.round(total)});
+    }else {
+      data.push(Math.round(total));
+    }
+    
+    dataSimple.push(Math.round(totalSimple));
+    const appliedRate = (rateMode === "percent") ? (1 + rate / 100) : rate;
 
     for (let i = 1; i <= count; i++) {
-      const appliedRate = (rateMode === "percent") ? (1 + rate / 100) : rate;
-      total *= appliedRate;
+      if (calcType === "compound") {
+        total *= appliedRate; // 복리
+        data.push(Math.round(total));
+      } else if (calcType === "simple") {
+        totalSimple += seed * (appliedRate - 1); // 단리
+        data.push(Math.round(totalSimple));
+      } else if (calcType === "both") {
+        total *= appliedRate; // 복리
+        totalSimple += seed * (appliedRate - 1); // 단리
+        data.push({ compound: Math.round(total), simple: Math.round(totalSimple) });
+      }
+      console.log("data: " + data);
       labels.push(`${i}${unitText}`);
-      data.push(Math.round(total));
     }
 
     return { labels, data };
@@ -230,69 +149,73 @@
     const rateMode = document.querySelector('input[name="rateMode"]:checked').value;
     const unit = document.getElementById("unit").value;
     const count = parseInt(document.getElementById("count").value);
+    const calcType = document.querySelector('input[name="calcType"]:checked').value;
+    const chartType = document.querySelector('input[name="chartType"]:checked').value;
 
     if (isNaN(seed) || isNaN(rate)) {
-      alert("시드머니와 수익율을 정확히 입력해주세요!");
+      alert("시드머니와 수익률을 정확히 입력해주세요!");
       return;
     }
 
-    const { labels, data } = calculateCompound(seed, rate, rateMode, unit, count);
+    const { labels, data } = calculateCompound(seed, rate, rateMode, unit, count, calcType);
     const ctx = document.getElementById("growthChart").getContext("2d");
-    const chartType = document.querySelector('input[name="chartType"]:checked').value;
 
-    if (chart) chart.destroy();
-
-    chart = new Chart(ctx, {
-      type: chartType,
-      data: {
-        labels,
-        datasets: [{
-          label: "🌱금액",
-          data,
-          borderColor: "#4caf50",
-          backgroundColor: "rgba(76,175,80,0.2)",
-          borderWidth: 3,
-          fill: true,
-          tension: 0.3,
-          pointRadius: 5,
-          pointBackgroundColor: "#81c784"
-        }]
+    const chartOptions = {
+      plugins: {
+        tooltip: { enabled: true, callbacks: { label: (ctx) => `${ctx.parsed.y.toLocaleString()} 원` } }
       },
-      options: {
-        plugins: {
-          tooltip: {
-            enabled: true,
-            callbacks: {
-              label: (ctx) => `${ctx.parsed.y.toLocaleString()} 원`
-            }
-          }
-        },
-        scales: {
-          x: { title: { display: true, text: "기간" } },
-          y: { title: { display: true, text: "금액(원)" } }
+      scales: {
+        x: { title: { display: true, text: "기간" }},
+        y: { 
+          title: { display: true, text: "금액(원)" },
+          beginAtZero: true // Y축 최소값 0
         }
       }
-    });
+    };
+
+    if(chart) chart.destroy();
+
+    if(calcType === "both") {
+      chart = new Chart(ctx, {
+        type: chartType,
+        data: {
+          labels,
+          datasets: [
+            { label: "🌱복리", data: data.map(d => d.compound), borderColor: "#4caf50", backgroundColor: "rgba(76,175,80,0.2)", fill: true, tension: 0.3, pointRadius: 5, pointBackgroundColor: "#81c784" },
+            { label: "🌱단리", data: data.map(d => d.simple), borderColor: "#2196f3", backgroundColor: "rgba(33,150,243,0.2)", fill: true, tension: 0.3, pointRadius: 5, pointBackgroundColor: "#64b5f6" }
+          ]
+        },
+        options: chartOptions
+      });
+    } else {
+      chart = new Chart(ctx, {
+        type: chartType,
+        data: { labels, datasets: [{ label: "🌱금액", data, borderColor: "#4caf50", backgroundColor: "rgba(76,175,80,0.2)", fill: true, tension: 0.3, pointRadius: 5, pointBackgroundColor: "#81c784" }] },
+        options: chartOptions
+      });
+    }
   }
 
-  // ✅ 단위 선택 시 입력단위 및 기본값 자동 변경
-  document.querySelectorAll('input[name="rateMode"]').forEach(radio => {
-    radio.addEventListener("change", (e) => {
-      const label = document.getElementById("rateUnitLabel");
-      const rateInput = document.getElementById("rate");
+document.querySelectorAll('input[name="rateMode"]').forEach(radio => {
+  radio.addEventListener("change", (e) => {
+    const label = document.getElementById("rateUnitLabel");
+    const rateInput = document.getElementById("rate");
+    let value = parseFloat(rateInput.value);
+    if (isNaN(value)) value = 0;
 
-      if (e.target.value === "percent") {
-        label.textContent = "%";
-        rateInput.value = 100;
-      } else {
-        label.textContent = "배";
-        rateInput.value = 2;
-      }
-    });
+    if (e.target.value === "percent") { 
+      // 배 → %
+      rateInput.value = ((value - 1) * 100).toFixed(2);
+      label.textContent = "%"; 
+    } else { 
+      // % → 배
+      rateInput.value = (1 + value / 100).toFixed(2);
+      label.textContent = "배"; 
+    }
   });
+});
 
   document.getElementById("generate").addEventListener("click", drawChart);
 </script>
-
 </body>
 </html>

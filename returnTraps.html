@@ -2,65 +2,133 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>💰 부의 공식 - 수익율의 함정</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
 body {
-  font-family: "Comic Sans MS", sans-serif;
-  background-color: #f0f4f8;
-  margin: 0;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    background-color: #f7f9fc;
+    margin: 0;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
 }
-h1 { color: #000; margin-bottom: 0; font-size: 2em; }
-p { color: #7f7e7e; margin-top: 0; margin-bottom: 20px; font-size: 0.9em; }
+h1 { color: #111827; margin-bottom: 5px; font-size: 1.8rem; text-align: center; }
+p { color: #6b7280; margin-top: 0; margin-bottom: 15px; font-size: 0.95rem; text-align: center; }
 
 .container {
-  display: flex; flex-direction: column; gap: 20px;
-  width: 100%; max-width: 1000px; align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 1000px;
+    align-items: center;
 }
+
+/* 카드 스타일 */
 .card {
-  background: #ffffff; border-radius: 15px;
-  box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
-  padding: 20px; width: 400px; display: flex;
-  flex-direction: column; gap: 15px;
+    background: #ffffff;
+    border-radius: 1.5rem; /* rounded-3xl */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    padding: 20px;
+    width: 95%;
+    max-width: 450px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transition: transform 0.2s;
 }
+.card:hover { transform: translateY(-2px); }
+
+/* 입력 행 */
 .input-row {
-  display: flex; align-items: center; gap: 8px;
-  flex-wrap: nowrap; overflow-x: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    overflow-x: auto;
 }
 input[type="number"], input[type="color"] {
-  padding: 6px 10px; border-radius: 10px; border: 1px solid #ccc;
-  text-align: right; font-size: 0.95em; background-color: #fff; width: 100px;
+    padding: 6px 10px;
+    border-radius: 0.75rem; /* rounded-xl */
+    border: 1px solid #d1d5db;
+    text-align: right;
+    font-size: 0.95rem;
+    background-color: #fff;
 }
-input[type="color"] { width: 50px; padding: 0; }
-button {
-  background-color: #34c759; border: none; border-radius: 12px;
-  padding: 8px 15px; font-size: 1em; cursor: pointer;
-  color: white; font-weight: bold; transition: 0.2s;
-}
-button:hover { background-color: #28a745; }
+input[type="color"] { width: 45px; padding: 0; }
 
+/* 버튼 */
+button {
+    background-color: #10b981;
+    border: none;
+    border-radius: 1rem;
+    padding: 10px 18px;
+    font-size: 1rem;
+    cursor: pointer;
+    color: white;
+    font-weight: 600;
+    transition: 0.2s;
+}
+button:hover { background-color: #059669; }
+button:active { transform: scale(0.97); }
+
+/* 시나리오 카드 */
 .scenario {
-  background: #ffffff; border-radius: 20px; padding: 15px; margin-bottom: 15px;
-  width: 95%; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-  box-shadow: 2px 2px 12px rgba(0,0,0,0.1);
+    background: #ffffff;
+    border-radius: 1.5rem;
+    padding: 15px;
+    margin-bottom: 15px;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
 }
+
+/* Canvas 차트 */
 canvas {
-  background-color: #ffffff; border-radius: 15px;
-  box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
-  margin-top: 20px; width: 90%; max-width: 800px;
+    background-color: #ffffff;
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    margin-top: 20px;
+    width: 100%;
+    max-width: 800px;
 }
+
+/* 컨트롤 버튼 그룹 */
 .control-buttons {
-  display: flex; gap: 15px; flex-wrap: wrap;
-  justify-content: center; margin-bottom: 15px; align-items: center;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 15px;
+    align-items: center;
 }
+
+/* 단위 선택 라디오 버튼 */
 .mode-selector {
-  display: flex; justify-content: center; gap: 10px;
-  align-items: center; margin-top: 5px; width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+    margin-top: 5px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+/* 반응형 */
+@media (max-width: 640px) {
+    h1 { font-size: 1.5rem; }
+    .card { max-width: 95%; padding: 15px; }
+    input[type="number"] { width: 80px; }
+    canvas { max-width: 95%; }
 }
 </style>
 </head>
@@ -77,11 +145,10 @@ canvas {
     <input type="number" id="totalYears" value="10" min="1" max="50"> 년
   </label>
 
-  <!-- ✅ 수익율 / 수익비 선택 라디오 버튼 -->
   <div class="mode-selector">
     단위:
-    <label><input type="radio" name="rateMode" value="ratio" checked> 수익비(배)</label>
-    <label><input type="radio" name="rateMode" value="percent"> 수익률(%)</label>
+    <label><input type="radio" name="rateMode" value="percent" checked> 수익률(%)</label>
+    <label><input type="radio" name="rateMode" value="ratio"> 수익비(배)</label>
   </div>
 </div>
 

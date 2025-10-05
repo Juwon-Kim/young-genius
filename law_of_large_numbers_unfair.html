@@ -174,7 +174,7 @@
         let isAutoFlipping = false;
         let isFlipping = false;
         let autoFlipInterval;
-        let flipSpeed = 50; // 밀리초 단위
+        let flipSpeed = 1; // 밀리초 단위
         
         // **새로운 변수: 앞면이 나올 이론적 확률 (0.0 ~ 1.0)**
         let probabilityHeads = 0.5; 
@@ -258,7 +258,7 @@
             $coin.textContent = '?';
             $coin.style.transform = 'rotateY(0deg)'; // 초기화
             // CSS 애니메이션 시작 (1080deg에서 종료됨)
-            $coin.style.animation = 'flipCoin 0.7s cubic-bezier(0.4, 0.0, 0.6, 1.0) forwards'; 
+            $coin.style.animation = 'flipCoin 0.001s cubic-bezier(0.4, 0.0, 0.6, 1.0) forwards'; 
             $flipResultText.textContent = '던지는 중...';
             $coin.classList.remove('coin-heads', 'coin-tails'); 
 
@@ -286,7 +286,7 @@
                 
                 isFlipping = false; // <-- 던지기 완료: 플래그 비활성화
 
-            }, 700); // CSS 애니메이션 시간과 일치
+            }, 1); // CSS 애니메이션 시간과 일치
         }
 
         /**
