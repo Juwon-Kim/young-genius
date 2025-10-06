@@ -107,6 +107,9 @@
                     <button id="autoFlipButton" onclick="toggleAutoFlip()" class="flip-button w-full py-3 bg-green-500 text-white font-medium rounded-xl hover:bg-green-600 mt-4">
                         자동 던지기 시작
                     </button>
+                    <button onclick="flip100Times()" class="flip-button w-full py-3 bg-purple-500 text-white font-medium rounded-xl hover:bg-purple-600 mt-2">
+                        100번 던지기
+                    </button>
                     <button onclick="resetSimulation()" class="flip-button w-full py-3 bg-gray-400 text-white font-medium rounded-xl hover:bg-gray-500">
                         초기화
                     </button>
@@ -189,6 +192,43 @@
                 autoFlipInterval = setInterval(autoFlipStep, flipSpeed);
             }
         }
+
+        async function flip100Times() {
+            if (isFlipping || isAutoFlipping) return; // 이미 던지는 중이면 무시
+            isFlipping = true;
+
+            for (let i = 0; i < 100; i++) {
+                const result = Math.random() < probabilityHeads ? 'H' : 'T';
+
+                $coin.textContent = '?';
+                $coin.style.transform = 'rotateY(0deg)';
+                $coin.style.animation = 'flipCoin 0.7s cubic-bezier(0.4,0,0.6,1) forwards';
+                $coin.classList.remove('coin-heads', 'coin-tails'); 
+                $flipResultText.textContent = `던지는 중... (${i+1}/100)`;
+
+                // flipSpeed를 딜레이로 사용
+                await new Promise(resolve => setTimeout(resolve, flipSpeed));
+
+                $coin.style.transform = 'rotateY(1080deg)';
+                $coin.style.animation = 'none';
+                if (result === 'H') {
+                    $coin.textContent = '앞';
+                    $coin.classList.add('coin-heads');
+                    $coin.classList.remove('coin-tails'); 
+                } else {
+                    $coin.textContent = '뒤';
+                    $coin.classList.add('coin-tails');
+                    $coin.classList.remove('coin-heads'); 
+                }
+
+                flipCoinNonAnimated(result); // 통계 업데이트
+            }
+
+            $flipResultText.textContent = '100번 던지기 완료';
+            isFlipping = false;
+        }
+
+
 
         function initializeCanvas() {
             canvas = document.getElementById('chartCanvas');
